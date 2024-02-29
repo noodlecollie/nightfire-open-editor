@@ -1,4 +1,5 @@
 /*
+ Copyright (C) 2024 NoodleCollie
  Copyright (C) 2023 Daniel Walder
  Copyright (C) 2022 Amara M. Kilic
  Copyright (C) 2022 Kristian Duske
@@ -22,53 +23,32 @@
 #pragma once
 
 #include "Assets/EntityModel_Forward.h"
-#include "IO/EntityModelParser.h"
-
-#include <assimp/matrix4x4.h>
+#include "IO/AssimpParser.h"
 
 #include <filesystem>
-#include <utility>
-
-struct aiNode;
-struct aiScene;
-struct aiMesh;
-
-namespace TrenchBroom::Assets
-{
-class Texture;
-} // namespace TrenchBroom::Assets
+#include <string>
 
 namespace TrenchBroom::IO
 {
 class FileSystem;
+class AssimpParser;
+class Reader;
 
-struct AssimpMeshWithTransforms
+class NightfireOpenModelParser : public AssimpParser
 {
-  const aiMesh* m_mesh;
-  aiMatrix4x4 m_transform;
-  aiMatrix4x4 m_axisTransform;
-};
-
-class AssimpParser : public EntityModelParser
-{
-public:
-  using TextureDim = std::pair<int32_t, int32_t>;
-
 private:
   std::filesystem::path m_path;
+  std::filesystem::path m_textureRoot;
   const FileSystem& m_fs;
-  std::vector<TextureDim> m_textureDims;
 
 public:
-  AssimpParser(std::filesystem::path path, const FileSystem& fs);
+  NightfireOpenModelParser(std::filesystem::path path, std::filesystem::path textureRoot, const FileSystem& fs);
 
-  static bool canParse(const std::filesystem::path& path);
+  static bool canParse(const std::filesystem::path& path, Reader reader);
 
-protected:
-  void doLoadFrame(
-    size_t frameIndex, Assets::EntityModel& model, Logger& logger) override;
+private:
   std::unique_ptr<Assets::EntityModel> doInitializeModel(Logger& logger) override;
-  void setTextureDims(std::vector<TextureDim> dims);
+  std::vector<AssimpParser::TextureDim> generateTextureDims() const;
 };
 
 } // namespace TrenchBroom::IO

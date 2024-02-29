@@ -688,11 +688,52 @@ aiMatrix4x4 getAxisTransform(const aiScene& scene)
   return aiMatrix4x4{};
 }
 
+// For NF support: re-scale texture co-ordinates if we need to.
+// The co-ordinates Assimp has calculated will be from taking
+// the original (s,t) co-ordinates in texture space and converting
+// them to (u,v) co-ordinates in normalised space. However, the
+// (s,t) co-ordinates are specified against the dimensions of the
+// original texture, and not against the embedded 4x1 placeholder
+// texture in the model, so the (u,v) co-ordinates will be way too
+// large. To rectify this, we have to re-scale them.
+static void updateVertexTexCoOrds(
+  const std::vector<AssimpParser::TextureDim>& textureDims,
+  size_t textureIndex,
+  std::vector<Assets::EntityModelVertex>& vertices)
+{
+  using VPos = Renderer::GLVertexAttributeTypes::P3;
+  using VTex = Renderer::GLVertexAttributeTypes::T02;
+  using Vertex = Renderer::GLVertex<VPos, VTex>;
+
+  if (textureDims.empty())
+  {
+    return;
+  }
+
+  vm::vec2f scale{1.0f, 1.0f};
+
+  if (textureIndex < textureDims.size())
+  {
+    scale[0] = 1.0f / (static_cast<float>(textureDims[textureIndex].first) / 4.0f);
+    scale[1] = 1.0f / static_cast<float>(textureDims[textureIndex].second);
+  }
+
+  for (Vertex& vertex : vertices)
+  {
+    vm::vec2f texCoOrds = Renderer::getVertexComponent<1>(vertex);
+    texCoOrds[0] *= scale[0];
+    texCoOrds[1] *= scale[1];
+
+    vertex = Vertex{Renderer::getVertexComponent<0>(vertex), texCoOrds};
+  }
+}
+
 Result<void> loadSceneFrame(
   const aiScene& scene,
   const size_t frameIndex,
   Assets::EntityModel& model,
-  const std::string& name)
+  const std::string& name,
+  const std::vector<AssimpParser::TextureDim>& texDims)
 {
   // load the animation information for the current "frame" (animation)
   const auto boneTransforms =
@@ -720,8 +761,10 @@ Result<void> loadSceneFrame(
   {
     if (const auto meshIndex = getMeshIndex(scene, *mesh.m_mesh))
     {
-      const auto vertices = computeMeshVertices(
+      auto vertices = computeMeshVertices(
         *mesh.m_mesh, mesh.m_transform, mesh.m_axisTransform, boneTransforms);
+
+      updateVertexTexCoOrds(texDims, mesh.m_mesh->mMaterialIndex, vertices);
 
       for (const auto& v : vertices)
       {
@@ -880,10 +923,16 @@ void AssimpParser::doLoadFrame(
   }
 
   // load the requested frame
-  loadSceneFrame(*scene, frameIndex, model, modelPath).transform_error([&](auto e) {
-    throw ParserException{
-      fmt::format("Assimp couldn't import model from '{}': {}", m_path.string(), e.msg)};
-  });
+  loadSceneFrame(*scene, frameIndex, model, modelPath, m_textureDims)
+    .transform_error([&](auto e) {
+      throw ParserException{fmt::format(
+        "Assimp couldn't import model from '{}': {}", m_path.string(), e.msg)};
+    });
+}
+
+void AssimpParser::setTextureDims(std::vector<TextureDim> dims)
+{
+  m_textureDims = std::move(dims);
 }
 
 } // namespace TrenchBroom::IO
