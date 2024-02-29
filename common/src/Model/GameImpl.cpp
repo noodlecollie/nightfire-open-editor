@@ -46,6 +46,7 @@
 #include "IO/Md3Parser.h"
 #include "IO/MdlParser.h"
 #include "IO/MdxParser.h"
+#include "IO/NightfireOpenModelParser.h"
 #include "IO/NodeReader.h"
 #include "IO/NodeWriter.h"
 #include "IO/ObjSerializer.h"
@@ -508,6 +509,11 @@ std::unique_ptr<Assets::EntityModel> GameImpl::doInitializeModel(
           auto parser = IO::ImageSpriteParser{modelName, file, m_fs};
           return parser.initializeModel(logger);
         }
+        if (IO::NightfireOpenModelParser::canParse(path, reader))
+        {
+          IO::NightfireOpenModelParser parser{path, m_config.textureConfig.root, m_fs};
+          return parser.initializeModel(logger);
+        }
         if (IO::AssimpParser::canParse(path))
         {
           auto parser = IO::AssimpParser{path, m_fs};
@@ -600,6 +606,12 @@ void GameImpl::doLoadFrame(
         if (IO::ImageSpriteParser::canParse(path))
         {
           auto parser = IO::ImageSpriteParser{modelName, file, m_fs};
+          parser.loadFrame(frameIndex, model, logger);
+          return kdl::void_success;
+        }
+        if (IO::NightfireOpenModelParser::canParse(path, reader))
+        {
+          IO::NightfireOpenModelParser parser{path, m_config.textureConfig.root, m_fs};
           parser.loadFrame(frameIndex, model, logger);
           return kdl::void_success;
         }
