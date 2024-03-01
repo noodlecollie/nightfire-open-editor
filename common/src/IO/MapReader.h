@@ -109,7 +109,7 @@ private:
 
 private: // data populated in response to MapParser callbacks
   std::vector<ObjectInfo> m_objectInfos;
-  std::optional<size_t> m_currentEntityInfo;
+  std::vector<size_t> m_currentEntityInfo;
 
 protected:
   /**
