@@ -93,26 +93,34 @@ void MapReader::onBeginEntity(
   std::vector<Model::EntityProperty> properties,
   ParserStatus& /* status */)
 {
-  m_currentEntityInfo = m_objectInfos.size();
+  m_currentEntityInfo.push_back(m_objectInfos.size());
   m_objectInfos.emplace_back(EntityInfo{std::move(properties), 0, 0});
 }
 
 void MapReader::onEndEntity(
   const size_t startLine, const size_t lineCount, ParserStatus& /* status */)
 {
-  assert(m_currentEntityInfo != std::nullopt);
-  assert(std::holds_alternative<EntityInfo>(m_objectInfos[*m_currentEntityInfo]));
+  assert(m_currentEntityInfo.size() > 0);
+  const size_t entInfo = m_currentEntityInfo.back();
+  m_currentEntityInfo.pop_back();
 
-  auto& entity = std::get<EntityInfo>(m_objectInfos[*m_currentEntityInfo]);
+  assert(std::holds_alternative<EntityInfo>(m_objectInfos[entInfo]));
+
+  EntityInfo& entity = std::get<EntityInfo>(m_objectInfos[entInfo]);
   entity.startLine = startLine;
   entity.lineCount = lineCount;
-
-  m_currentEntityInfo = std::nullopt;
 }
 
 void MapReader::onBeginBrush(const size_t /* line */, ParserStatus& /* status */)
 {
-  m_objectInfos.emplace_back(BrushInfo{{}, 0, 0, m_currentEntityInfo});
+  std::optional<size_t> parentEnt;
+
+  if (m_currentEntityInfo.size() > 0)
+  {
+    parentEnt = m_currentEntityInfo.back();
+  }
+
+  m_objectInfos.push_back(BrushInfo{{}, 0, 0, parentEnt});
 }
 
 void MapReader::onEndBrush(
@@ -179,7 +187,7 @@ void MapReader::onPatch(
     std::move(textureName),
     startLine,
     lineCount,
-    m_currentEntityInfo});
+    (!m_currentEntityInfo.empty()) ? std::optional<size_t>(m_currentEntityInfo.back()) : std::nullopt});
 }
 
 // helper methods

@@ -128,6 +128,7 @@ private:
   void parseHexen2Face(ParserStatus& status);
   void parseDaikatanaFace(ParserStatus& status);
   void parseValveFace(ParserStatus& status);
+  void parseNightfireOpenFace(ParserStatus& status);
   void parsePrimitiveFace(ParserStatus& status);
 
   void parsePatch(ParserStatus& status, size_t startLine);
