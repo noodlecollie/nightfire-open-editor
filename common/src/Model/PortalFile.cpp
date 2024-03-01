@@ -99,6 +99,12 @@ Result<PortalFile> loadPortalFile(std::istream& stream)
     numPortals = std::stoul(line);
     std::getline(stream, line); // number of leafs (ignored)
   }
+  else if (formatCode == "PRT1-NFO")
+  {
+    std::getline(stream, line); // number of leafs (ignored)
+    std::getline(stream, line); // number of portals
+    numPortals = std::stoul(line);
+  }
   else
   {
     return Error{"Unknown portal format: " + formatCode};

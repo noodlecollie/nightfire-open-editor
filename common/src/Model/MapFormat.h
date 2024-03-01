@@ -71,6 +71,10 @@ enum class MapFormat
    * Quake 3 with brush primitives, also allows Quake 2 brushes
    */
   Quake3,
+  /**
+   * Mightfire Open map format - augmented Valve format
+   */
+  NightfireOpen
 };
 
 std::ostream& operator<<(std::ostream& lhs, MapFormat rhs);
