@@ -370,7 +370,9 @@ void StandardMapParser::parseBrushOrBrushPrimitiveOrPatch(ParserStatus& status)
     {
       // Create a fake entity.
       auto properties = std::vector<Model::EntityProperty>();
-      properties.push_back(Model::EntityProperty("classname", "func_detail"));
+      properties.push_back(Model::EntityProperty(
+        Model::EntityPropertyKeys::Classname,
+        Model::EntityPropertyValues::FuncDetailClassname));
       onBeginEntity(startLine, std::move(properties), status);
     }
 
