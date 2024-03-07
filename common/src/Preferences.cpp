@@ -230,6 +230,8 @@ Preference<bool> CameraAltMoveInvert(
 Preference<bool> CameraMoveInCursorDir(
   "Controls/Camera/Move camera in cursor dir", false);
 Preference<float> CameraFov("Controls/Camera/Field of vision", 90.0f);
+Preference<float> CameraSelectionFocusDistance(
+  "Controls/Camera/Distance when focusing selection", 64.0f);
 
 Preference<float> CameraFlyMoveSpeed("Controls/Camera/Fly move speed", 0.5f);
 
@@ -408,6 +410,7 @@ const std::vector<PreferenceBase*>& staticPreferences()
     &CameraMoveInCursorDir,
     &CameraFov,
     &CameraFlyMoveSpeed,
+    &CameraSelectionFocusDistance,
     &Link2DCameras,
     &CameraFlyForward(),
     &CameraFlyBackward(),
