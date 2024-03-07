@@ -146,6 +146,10 @@ QWidget* ViewPreferencePane::createViewPreferences()
   m_fovSlider = new SliderWithLabel{50, 150};
   m_fovSlider->setMaximumWidth(400);
   m_fovSlider->setToolTip("Sets the field of vision in the 3D editing view.");
+  m_selectionFocusDistanceSlider = new SliderWithLabel{0, 200};
+  m_selectionFocusDistanceSlider->setMaximumWidth(400);
+  m_selectionFocusDistanceSlider->setToolTip(
+    "Sets the distance the camera will be from objects when focusing on a selection.");
 
   m_showAxes = new QCheckBox{};
   m_showAxes->setToolTip(
@@ -194,6 +198,7 @@ QWidget* ViewPreferencePane::createViewPreferences()
   layout->addRow("Brightness", m_brightnessSlider);
   layout->addRow("Grid", m_gridAlphaSlider);
   layout->addRow("FOV", m_fovSlider);
+  layout->addRow("Focus Offset", m_selectionFocusDistanceSlider);
   layout->addRow("Show axes", m_showAxes);
   layout->addRow("Texture mode", m_textureModeCombo);
   layout->addRow("Enable multisampling", m_enableMsaa);
@@ -235,6 +240,11 @@ void ViewPreferencePane::bindEvents()
   connect(
     m_fovSlider, &SliderWithLabel::valueChanged, this, &ViewPreferencePane::fovChanged);
   connect(
+    m_selectionFocusDistanceSlider,
+    &SliderWithLabel::valueChanged,
+    this,
+    &ViewPreferencePane::selectionFocusDistanceChanged);
+  connect(
     m_showAxes, &QCheckBox::stateChanged, this, &ViewPreferencePane::showAxesChanged);
   connect(
     m_enableMsaa, &QCheckBox::stateChanged, this, &ViewPreferencePane::enableMsaaChanged);
@@ -273,6 +283,7 @@ void ViewPreferencePane::doResetToDefaults()
   prefs.resetToDefault(Preferences::Brightness);
   prefs.resetToDefault(Preferences::GridAlpha);
   prefs.resetToDefault(Preferences::CameraFov);
+  prefs.resetToDefault(Preferences::CameraSelectionFocusDistance);
   prefs.resetToDefault(Preferences::ShowAxes);
   prefs.resetToDefault(Preferences::EnableMSAA);
   prefs.resetToDefault(Preferences::TextureMinFilter);
@@ -289,6 +300,8 @@ void ViewPreferencePane::doUpdateControls()
   m_brightnessSlider->setValue(brightnessToUI(pref(Preferences::Brightness)));
   m_gridAlphaSlider->setRatio(pref(Preferences::GridAlpha));
   m_fovSlider->setValue(int(pref(Preferences::CameraFov)));
+  m_selectionFocusDistanceSlider->setValue(
+    int(pref(Preferences::CameraSelectionFocusDistance)));
 
   const auto textureModeIndex = findTextureMode(
     pref(Preferences::TextureMinFilter), pref(Preferences::TextureMagFilter));
@@ -393,6 +406,12 @@ void ViewPreferencePane::fovChanged(const int value)
 {
   auto& prefs = PreferenceManager::instance();
   prefs.set(Preferences::CameraFov, float(value));
+}
+
+void ViewPreferencePane::selectionFocusDistanceChanged(int value)
+{
+  auto& prefs = PreferenceManager::instance();
+  prefs.set(Preferences::CameraSelectionFocusDistance, float(value));
 }
 
 void ViewPreferencePane::showAxesChanged(const int state)
