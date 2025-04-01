@@ -85,6 +85,7 @@ private:
   static const std::string PatchId;
 
   QuakeMapTokenizer m_tokenizer;
+  std::string m_currentEntityClassname;
 
 protected:
   mdl::MapFormat m_sourceMapFormat;
@@ -135,6 +136,7 @@ private:
   void parseHexen2Face(ParserStatus& status);
   void parseDaikatanaFace(ParserStatus& status);
   void parseValveFace(ParserStatus& status);
+  void parseNightfireOpenFace(ParserStatus& status);
   void parsePrimitiveFace(ParserStatus& status);
 
   void parsePatch(ParserStatus& status, const FileLocation& startLocation);
