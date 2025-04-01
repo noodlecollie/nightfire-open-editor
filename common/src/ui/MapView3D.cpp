@@ -341,8 +341,9 @@ float computeCameraOffset(
   auto offset = std::numeric_limits<float>::min();
   const auto handlePoint = [&](const vm::vec3d& point, const vm::plane3f& plane) {
     const auto ray = vm::ray3f{camera.position(), -camera.direction()};
-    const auto newPlane =
-      vm::plane3f{vm::vec3f{point} + 64.0f * plane.normal, plane.normal};
+    const auto newPlane = vm::plane3f{
+      vm::vec3f{point} + pref(Preferences::CameraSelectionFocusDistance) * plane.normal,
+      plane.normal};
     if (const auto dist = vm::intersect_ray_plane(ray, newPlane); dist && *dist > 0.0f)
     {
       offset = std::max(offset, *dist);
