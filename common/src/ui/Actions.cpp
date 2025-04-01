@@ -1321,6 +1321,16 @@ void ActionManager::createEditMenu()
     },
   }));
   editMenu.addItem(addAction(Action{
+    "Menu/Edit/Select With Same Classname",
+    QObject::tr("Select With Same Classname"),
+    ActionContext::Any,
+    QKeySequence{},
+    [](auto& context) { context.frame()->selectEntitiesWithSameClassname(); },
+    [](const auto& context) {
+      return context.hasDocument()
+             && context.frame()->canSelectEntitiesWithSameClassname();
+    }}));
+  editMenu.addItem(addAction(Action{
     "Menu/Edit/Select Touching",
     QObject::tr("Select Touching"),
     ActionContext::Any,
