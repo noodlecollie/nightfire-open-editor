@@ -5,6 +5,7 @@ on:
       - '**'
     branches:
       - master
+      - nfopen-support
   pull_request:
 
 name: CI
@@ -19,7 +20,7 @@ jobs:
       # Don't cancel the macOS build if the Linux build fails, etc.
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-13, macos-14, windows-2022]
+        os: [ubuntu-22.04, windows-2022]
         tb-build-type: [release]
         tb-arch: [default-arch]
         exclude:
