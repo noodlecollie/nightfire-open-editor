@@ -721,11 +721,50 @@ aiMatrix4x4 getAxisTransform(const aiScene& scene)
   // clang-format on
 }
 
+// For NF support: re-scale texture co-ordinates if we need to.
+// The co-ordinates Assimp has calculated will be from taking
+// the original (s,t) co-ordinates in texture space and converting
+// them to (u,v) co-ordinates in normalised space. However, the
+// (s,t) co-ordinates are specified against the dimensions of the
+// original texture, and not against the embedded 4x1 placeholder
+// texture in the model, so the (u,v) co-ordinates will be way too
+// large. To rectify this, we have to re-scale them.
+static std::vector<mdl::EntityModelVertex> updateVertexTexCoOrds(
+  const std::vector<AssimpLoader::TextureDim>& textureDims,
+  size_t textureIndex,
+  std::vector<mdl::EntityModelVertex> vertices)
+{
+  if (textureDims.empty())
+  {
+    return vertices;
+  }
+
+  vm::vec2f scale{1.0f, 1.0f};
+
+  if (textureIndex < textureDims.size())
+  {
+    scale[0] = 1.0f / (static_cast<float>(textureDims[textureIndex].first) / 4.0f);
+    scale[1] = 1.0f / static_cast<float>(textureDims[textureIndex].second);
+  }
+
+  for (mdl::EntityModelVertex& vertex : vertices)
+  {
+    vm::vec2f texCoOrds = render::getVertexComponent<1>(vertex);
+    texCoOrds[0] *= scale[0];
+    texCoOrds[1] *= scale[1];
+
+    vertex = mdl::EntityModelVertex{render::getVertexComponent<0>(vertex), texCoOrds};
+  }
+
+  return vertices;
+}
+
 Result<void> loadSceneFrame(
   const aiScene& scene,
   const size_t frameIndex,
   mdl::EntityModelData& model,
-  const std::string& name)
+  const std::string& name,
+  const std::vector<AssimpLoader::TextureDim>& texDims)
 {
   // load the animation information for the current "frame" (animation)
   const auto boneTransforms =
@@ -760,6 +799,10 @@ Result<void> loadSceneFrame(
                       mesh.m_transform,
                       mesh.m_axisTransform,
                       boneTransforms)
+                    | kdl::transform([&](std::vector<mdl::EntityModelVertex> vertices) {
+                        return updateVertexTexCoOrds(
+                          texDims, mesh.m_mesh->mMaterialIndex, std::move(vertices));
+                      })
                     | kdl::transform([&](const auto& vertices) {
                         for (const auto& v : vertices)
                         {
@@ -860,15 +903,24 @@ Result<mdl::EntityModelData> AssimpLoader::load(tb::Logger& logger)
       // load skins for this surface
       auto textures =
         loadTexturesForMaterial(*scene, mesh->mMaterialIndex, m_path, m_fs, logger);
-      auto materials = kdl::vec_transform(std::move(textures), [](auto texture) {
+
+      unsigned int currentTextureIndex = 0;
+      auto materials = kdl::vec_transform(std::move(textures), [&](auto texture) {
         auto textureResource = createTextureResource(std::move(texture));
-        return mdl::Material{"", std::move(textureResource)};
+
+        const unsigned int materialIndex = mesh->mMaterialIndex;
+
+        aiString path{};
+        scene->mMaterials[materialIndex]->GetTexture(
+          aiTextureType_DIFFUSE, currentTextureIndex++, &path);
+
+        return mdl::Material{path.C_Str(), std::move(textureResource)};
       });
       surface.setSkins(std::move(materials));
     }
 
     return std::views::iota(0u, numSequences) | std::views::transform([&](const auto i) {
-             return loadSceneFrame(*scene, i, data, modelPath);
+             return loadSceneFrame(*scene, i, data, modelPath, m_textureDims);
            })
            | kdl::fold | kdl::transform([&]() { return std::move(data); });
   }
@@ -876,6 +928,11 @@ Result<mdl::EntityModelData> AssimpLoader::load(tb::Logger& logger)
   {
     return Error{e.what()};
   }
+}
+
+void AssimpLoader::setTextureDims(std::vector<TextureDim> dims)
+{
+  m_textureDims = std::move(dims);
 }
 
 } // namespace tb::io
