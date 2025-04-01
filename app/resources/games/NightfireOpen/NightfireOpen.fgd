@@ -2146,6 +2146,7 @@
 [
 	model(studio) : "Model"
 	fixedlight(color255) : "Fixed lighting colour" : "0 0 0"
+	lightingoffset(string) : "Location to sample light from, as an offset from the model origin (X Y Z)" : "0 0 0"
 	sequencename(string) : "Sequence name" : "idle"
 	body(integer) : "Body" : 0
 	skin(integer) : "Skin" : 0
@@ -2177,13 +2178,13 @@
 
 @PointClass base(Targetname, RenderFields, Angles) size(-14 -12 0, 14 12 8) model({ "path": "models/weapon_ronin/w_ronin.mdl" }) = npc_ronin_turret : "Ronin Turret NPC"
 [
-	health(integer) : "Health (<= 0 implies indestructable)" : 100
+	health(integer) : "Health (<= 0 implies indestructable)" : 250
 	sightfov(integer) : "Field of view within which enemies will be targeted. Values <= 0 imply any direction." : 150
 	shootfov(integer) : "Cone around line of sight, within which enemies will trigger the the Ronin to fire" : 20
-	searchrange(integer) : "Range within which enemies will be targeted. Values <= 0 stop the Ronin from finding targts." : 380
+	searchrange(integer) : "Range within which enemies will be targeted. Values <= 0 stop the Ronin from finding targts." : 500
 	firerate(integer) : "Number of bullets fired per second." : 8
-	bulletspread(integer) : "Width of inaccuracy cone when firing bullets, between 0 and 178 degrees." : 10
-	rotationspeed(integer) : "Degrees the turret can rotate per second" : 130
+	bulletspread(integer) : "Width of inaccuracy cone when firing bullets, between 0 and 178 degrees." : 1
+	rotationspeed(integer) : "Degrees the turret can rotate per second" : 180
 	explosiondamage(integer) : "Amount of damage dealt when the Ronin explodes" : 120
 
 	spawnflags(flags) =
