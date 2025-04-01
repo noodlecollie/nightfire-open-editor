@@ -160,6 +160,7 @@ extern Preference<bool> CameraAltMoveInvert;
 extern Preference<bool> CameraMoveInCursorDir;
 
 extern Preference<float> CameraFov;
+extern Preference<float> CameraSelectionFocusDistance;
 
 static constexpr auto MinCameraFlyMoveSpeed = 0.1f;
 static constexpr auto MaxCameraFlyMoveSpeed = 10.0f;
