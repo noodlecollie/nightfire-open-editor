@@ -1,7 +1,5 @@
 /*
- Copyright (C) 2023 Daniel Walder
- Copyright (C) 2022 Amara M. Kilic
- Copyright (C) 2022 Kristian Duske
+ Copyright (C) 2010 Kristian Duske
 
  This file is part of TrenchBroom.
 
@@ -21,52 +19,32 @@
 
 #pragma once
 
-#include "io/EntityModelLoader.h"
-
-#include <assimp/matrix4x4.h>
+#include "io/AssimpLoader.h"
 
 #include <filesystem>
-#include <utility>
-
-struct aiNode;
-struct aiScene;
-struct aiMesh;
-
-namespace tb::mdl
-{
-class Material;
-} // namespace tb::mdl
 
 namespace tb::io
 {
 class FileSystem;
+class Reader;
 
-struct AssimpMeshWithTransforms
+class NightfireOpenModelLoader : public AssimpLoader
 {
-  const aiMesh* m_mesh;
-  aiMatrix4x4 m_transform;
-  aiMatrix4x4 m_axisTransform;
-};
-
-class AssimpLoader : public EntityModelLoader
-{
-public:
-  using TextureDim = std::pair<int32_t, int32_t>;
-
 private:
   std::filesystem::path m_path;
+  std::filesystem::path m_textureRoot;
   const FileSystem& m_fs;
-  std::vector<TextureDim> m_textureDims;
 
 public:
-  AssimpLoader(std::filesystem::path path, const FileSystem& fs);
+  NightfireOpenModelLoader(
+    std::filesystem::path path, std::filesystem::path textureRoot, const FileSystem& fs);
 
-  static bool canParse(const std::filesystem::path& path);
+  static bool canParse(const std::filesystem::path& path, Reader reader);
 
   Result<mdl::EntityModelData> load(Logger& logger) override;
 
-protected:
-  void setTextureDims(std::vector<TextureDim> dims);
+private:
+  std::vector<AssimpLoader::TextureDim> generateTextureDims() const;
 };
 
 } // namespace tb::io
