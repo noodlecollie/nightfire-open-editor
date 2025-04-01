@@ -58,7 +58,7 @@ bool GLContextManager::initialized() const
 static void initializeGlew()
 {
   glewExperimental = GL_TRUE;
-  if (const auto glewState = glewInit(); glewState != GLEW_OK)
+  if (const auto glewState = glewInit(); glewState != GLEW_OK && glewState != GLEW_ERROR_NO_GLX_DISPLAY)
   {
     throw RenderException{fmt::format(
       "Error initializing glew: {}",
