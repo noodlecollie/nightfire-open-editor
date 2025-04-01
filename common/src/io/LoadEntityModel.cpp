@@ -30,6 +30,7 @@
 #include "io/Md3Loader.h"
 #include "io/MdlLoader.h"
 #include "io/MdxLoader.h"
+#include "io/NightfireOpenModelLoader.h"
 #include "io/SprLoader.h"
 #include "mdl/EntityModel.h"
 #include "mdl/GameConfig.h"
@@ -116,6 +117,11 @@ Result<mdl::EntityModelData> loadEntityModelData(
              if (io::ImageSpriteLoader::canParse(path))
              {
                auto loader = io::ImageSpriteLoader{modelName, file, fs};
+               return loader.load(logger);
+             }
+             if (io::NightfireOpenModelLoader::canParse(path, reader))
+             {
+               auto loader = io::NightfireOpenModelLoader{path, materialConfig.root, fs};
                return loader.load(logger);
              }
              if (io::AssimpLoader::canParse(path))
