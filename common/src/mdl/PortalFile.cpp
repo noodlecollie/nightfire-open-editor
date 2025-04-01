@@ -56,6 +56,7 @@ Result<PortalFile> loadPortalFile(std::istream& stream)
 
   auto line = std::string{};
   auto numPortals = 0ul;
+  auto linesToSkip = 0ul;
   auto prt1ForQ3 = false;
 
   // read header
@@ -96,6 +97,13 @@ Result<PortalFile> loadPortalFile(std::istream& stream)
     numPortals = std::stoul(line);
     std::getline(stream, line); // number of leafs (ignored)
   }
+  else if (formatCode == "PRT1-NFO")
+  {
+    std::getline(stream, line); // number of leafs
+    linesToSkip = std::stoul(line);
+    std::getline(stream, line); // number of portals
+    numPortals = std::stoul(line);
+  }
   else
   {
     return Error{"Unknown portal format: " + formatCode};
@@ -104,6 +112,12 @@ Result<PortalFile> loadPortalFile(std::istream& stream)
   if (!stream.good())
   {
     return Error{"Error reading header"};
+  }
+
+  while (linesToSkip > 0)
+  {
+    std::getline(stream, line);
+    --linesToSkip;
   }
 
   // read portals

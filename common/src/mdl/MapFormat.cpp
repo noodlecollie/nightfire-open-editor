@@ -65,6 +65,10 @@ MapFormat formatFromName(const std::string& formatName)
   {
     return MapFormat::Quake3;
   }
+  if (formatName == "Nightfire Open")
+  {
+    return MapFormat::NightfireOpen;
+  }
   return MapFormat::Unknown;
 }
 
@@ -102,6 +106,9 @@ std::ostream& operator<<(std::ostream& lhs, const MapFormat rhs)
   case MapFormat::Quake3:
     lhs << "Quake3";
     break;
+  case MapFormat::NightfireOpen:
+    lhs << "Nightfire_Open";
+    break;
   }
   return lhs;
 }
@@ -128,6 +135,8 @@ std::string formatName(const MapFormat format)
     return "Quake3 (Valve)";
   case MapFormat::Quake3:
     return "Quake3";
+  case MapFormat::NightfireOpen:
+    return "Nightfire Open";
   case MapFormat::Unknown:
     return "Unknown";
     switchDefault();
@@ -156,6 +165,8 @@ std::vector<MapFormat> compatibleFormats(const MapFormat format)
     return {MapFormat::Quake3_Valve, MapFormat::Quake3, MapFormat::Quake3_Legacy};
   case MapFormat::Quake3:
     return {MapFormat::Quake3, MapFormat::Quake3_Valve, MapFormat::Quake3_Legacy};
+  case MapFormat::NightfireOpen:
+    return {MapFormat::NightfireOpen, MapFormat::Valve, MapFormat::Standard};
   case MapFormat::Unknown:
     return {MapFormat::Unknown};
     switchDefault();
@@ -169,6 +180,7 @@ bool isParallelUVCoordSystem(const MapFormat format)
   case MapFormat::Valve:
   case MapFormat::Quake2_Valve:
   case MapFormat::Quake3_Valve:
+  case MapFormat::NightfireOpen:
     return true;
   case MapFormat::Standard:
   case MapFormat::Quake2:

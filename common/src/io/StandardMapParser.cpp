@@ -256,12 +256,23 @@ void StandardMapParser::parseEntity(ParserStatus& status)
     auto propertyKeys = EntityPropertyKeys();
     parseEntityProperties(properties, propertyKeys, status);
 
+    auto classnameProp = std::find_if(
+      properties.begin(), properties.end(), [](const mdl::EntityProperty& prop) {
+        return prop.key() == mdl::EntityPropertyKeys::Classname;
+      });
+
+    if (classnameProp != properties.end())
+    {
+      m_currentEntityClassname = classnameProp->value();
+    }
+
     onBeginEntity(startLocation, properties, status);
     parseObjects(status);
 
     token = m_tokenizer.skipAndNextToken(QuakeMapToken::Comment, QuakeMapToken::CBrace);
 
     onEndEntity(token.location(), status);
+    m_currentEntityClassname.clear();
   }
 }
 
@@ -366,6 +377,52 @@ void StandardMapParser::parseObject(ParserStatus& status)
       parseBrush(status, startLocation, false);
     }
   }
+  else if (m_sourceMapFormat == mdl::MapFormat::NightfireOpen)
+  {
+    // We expect brush properties or the start of the brush face defs.
+    token = m_tokenizer.peekToken(QuakeMapToken::String | QuakeMapToken::OParenthesis);
+
+    bool needsDetailEntity = false;
+
+    // If we have "BRUSHFLAGS" "DETAIL" before the brush, this means we need
+    // to wrap the brush in a fake func_detail entity.
+    if (token.hasType(QuakeMapToken::String))
+    {
+      token = m_tokenizer.nextToken(QuakeMapToken::String);
+      const std::string key = token.data();
+
+      token = m_tokenizer.nextToken(QuakeMapToken::String);
+      const std::string value = token.data();
+
+      // Right now, "BRUSHFLAGS" "DETAIL" is all we support. We expect a '(' next.
+      token = m_tokenizer.peekToken(QuakeMapToken::OParenthesis);
+
+      // Note that in some maps (eg. Casino), some brush entities have this flag set
+      // for their brushes. We don't want to create a detail entity if the brush is
+      // already part of a different entity.
+      needsDetailEntity =
+        m_currentEntityClassname == mdl::EntityPropertyValues::WorldspawnClassname
+        && key == "BRUSHFLAGS" && value == "DETAIL";
+    }
+
+    if (needsDetailEntity)
+    {
+      // Create a fake entity.
+      auto properties = std::vector<mdl::EntityProperty>();
+      properties.push_back(mdl::EntityProperty(
+        mdl::EntityPropertyKeys::Classname,
+        mdl::EntityPropertyValues::FuncDetailClassname));
+      onBeginEntity(startLocation, std::move(properties), status);
+    }
+
+    parseBrush(status, startLocation, false);
+
+    if (needsDetailEntity)
+    {
+      // Terminate the fake entity.
+      onEndEntity(m_tokenizer.peekToken().location(), status);
+    }
+  }
   else
   {
     token = m_tokenizer.peekToken(QuakeMapToken::OParenthesis);
@@ -454,6 +511,9 @@ void StandardMapParser::parseFace(ParserStatus& status, const bool primitive)
     break;
   case mdl::MapFormat::Valve:
     parseValveFace(status);
+    break;
+  case mdl::MapFormat::NightfireOpen:
+    parseNightfireOpenFace(status);
     break;
   case mdl::MapFormat::Quake3:
     if (primitive)
@@ -615,6 +675,33 @@ void StandardMapParser::parseValveFace(ParserStatus& status)
   attribs.setRotation(parseFloat());
   attribs.setXScale(parseFloat());
   attribs.setYScale(parseFloat());
+
+  onValveBrushFace(
+    location, m_targetMapFormat, p1, p2, p3, attribs, uAxis, vAxis, status);
+}
+
+void StandardMapParser::parseNightfireOpenFace(ParserStatus& status)
+{
+  const auto location = m_tokenizer.location();
+
+  const auto [p1, p2, p3] = parseFacePoints(status);
+  const auto materialName = parseMaterialName(status);
+
+  const auto [uAxis, uOffset, vAxis, vOffset] = parseValveUVAxes(status);
+
+  auto attribs = mdl::BrushFaceAttributes{materialName};
+  attribs.setXOffset(uOffset);
+  attribs.setYOffset(vOffset);
+  attribs.setRotation(parseFloat());
+  attribs.setXScale(parseFloat());
+  attribs.setYScale(parseFloat());
+
+  // For now, skip face flags, material and lightmap properties, as we can't use them yet.
+  parseInteger();                                             // Face flags
+  m_tokenizer.readAnyString(QuakeMapTokenizer::Whitespace()); // Material
+
+  // Lightmap scale and rotation
+  parseFloatVector<2>(QuakeMapToken::OBracket, QuakeMapToken::CBracket);
 
   onValveBrushFace(
     location, m_targetMapFormat, p1, p2, p3, attribs, uAxis, vAxis, status);
