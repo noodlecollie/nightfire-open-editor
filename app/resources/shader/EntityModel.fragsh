@@ -34,11 +34,15 @@ void main() {
 
     // Assume alpha masked or opaque.
     // TODO: Make this optional if we gain support for translucent textures
-    if (texel.a < 0.5) {
-        discard;
-    }
+    // NFOPEN: Disabling this for now. We need masking on a per-material
+    // basis, but it's not clear right now how to add that. We just need
+    // to make sure models don't draw transparent.
+    //if (texel.a < 0.5) {
+    //    discard;
+    //}
 
-    gl_FragColor = vec4(vec3(Brightness / 2.0 * texel), texel.a);
+    // NFOPEN: Overriding alpha here, see above.
+    gl_FragColor = vec4(vec3(Brightness / 2.0 * texel), /*texel.a*/ 1.0);
     gl_FragColor = clamp(2 * gl_FragColor, 0.0, 1.0);
     
     if (GrayScale) {
