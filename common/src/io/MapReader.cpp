@@ -110,24 +110,26 @@ void MapReader::onBeginEntity(
   std::vector<mdl::EntityProperty> properties,
   ParserStatus& /* status */)
 {
-  m_currentEntityInfo = m_objectInfos.size();
+  m_currentEntityInfo.push_back(m_objectInfos.size());
   m_objectInfos.emplace_back(EntityInfo{std::move(properties), location, std::nullopt});
 }
 
 void MapReader::onEndEntity(const FileLocation& endLocation, ParserStatus& /* status */)
 {
-  assert(m_currentEntityInfo != std::nullopt);
-  assert(std::holds_alternative<EntityInfo>(m_objectInfos[*m_currentEntityInfo]));
+  assert(!m_currentEntityInfo.empty());
+  const size_t entInfo = m_currentEntityInfo.back();
+  m_currentEntityInfo.pop_back();
 
-  auto& entity = std::get<EntityInfo>(m_objectInfos[*m_currentEntityInfo]);
+  assert(std::holds_alternative<EntityInfo>(m_objectInfos[entInfo]));
+
+  auto& entity = std::get<EntityInfo>(m_objectInfos[entInfo]);
   entity.endLocation = endLocation;
-
-  m_currentEntityInfo = std::nullopt;
 }
 
 void MapReader::onBeginBrush(const FileLocation& location, ParserStatus& /* status */)
 {
-  m_objectInfos.emplace_back(BrushInfo{{}, location, std::nullopt, m_currentEntityInfo});
+  m_objectInfos.emplace_back(
+    BrushInfo{{}, location, std::nullopt, getCurrentEntityInfo()});
 }
 
 void MapReader::onEndBrush(const FileLocation& endLocation, ParserStatus& /* status */)
@@ -194,7 +196,7 @@ void MapReader::onPatch(
     std::move(materialName),
     startLocation,
     endLocation,
-    m_currentEntityInfo});
+    getCurrentEntityInfo()});
 }
 
 // helper methods
@@ -986,6 +988,13 @@ void MapReader::createNodes(ParserStatus& status, kdl::task_manager& taskManager
         [&](mdl::PatchNode*) { onNode(parentNode, std::move(node), status); }));
     }
   }
+}
+
+std::optional<size_t> MapReader::getCurrentEntityInfo() const
+{
+  return (!m_currentEntityInfo.empty())
+           ? std::optional<size_t>(m_currentEntityInfo.back())
+           : std::nullopt;
 }
 
 /**

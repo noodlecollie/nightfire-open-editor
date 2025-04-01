@@ -70,6 +70,7 @@ extern const std::string WorldspawnClassname;
 extern const std::string NoClassname;
 extern const std::string LayerClassname;
 extern const std::string GroupClassname;
+extern const std::string FuncDetailClassname;
 extern const std::string GroupTypeLayer;
 extern const std::string GroupTypeGroup;
 extern const std::string DefaultValue;
