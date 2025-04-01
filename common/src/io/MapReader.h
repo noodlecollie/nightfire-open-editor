@@ -111,7 +111,7 @@ private:
 
 private: // data populated in response to MapParser callbacks
   std::vector<ObjectInfo> m_objectInfos;
-  std::optional<size_t> m_currentEntityInfo;
+  std::vector<size_t> m_currentEntityInfo;
 
 protected:
   /**
@@ -183,6 +183,7 @@ protected: // implement MapParser interface
 
 private: // helper methods
   void createNodes(ParserStatus& status, kdl::task_manager& taskManager);
+  std::optional<size_t> getCurrentEntityInfo() const;
 
 private: // subclassing interface - these will be called in the order that nodes should be
          // inserted

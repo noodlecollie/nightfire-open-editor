@@ -140,6 +140,24 @@ protected:
       face.attributes().xScale(),
       face.attributes().yScale());
   }
+
+  void writeNightfireOpenExtraMaterialInfo(
+    std::ostream& stream, const mdl::BrushFace& face) const
+  {
+    const std::string& materialName = face.attributes().materialName().empty()
+                                        ? mdl::BrushFaceAttributes::NoMaterialName
+                                        : face.attributes().materialName();
+
+    // For now, the material and lightmap scale/rot are hard-coded until we can implement
+    // proper support.
+    fmt::format_to(
+      std::ostreambuf_iterator<char>(stream),
+      " {} wld_lightmap [ 16 0 ]",
+      // Slight hack for now: if the texture is a special texture,
+      // set flag for no lightmaps on the face. This is quite
+      // crude, and should be fixed in a principled way later.
+      materialName.rfind("special/", 0) == 0 ? 32U : 0U);
+  }
 };
 
 class Quake2FileSerializer : public QuakeFileSerializer
@@ -276,6 +294,24 @@ private:
   }
 };
 
+class NightfireOpenFileSerializer : public QuakeFileSerializer
+{
+public:
+  explicit NightfireOpenFileSerializer(std::ostream& stream)
+    : QuakeFileSerializer(stream)
+  {
+  }
+
+private:
+  void doWriteBrushFace(std::ostream& stream, const mdl::BrushFace& face) const override
+  {
+    writeFacePoints(stream, face);
+    writeValveMaterialInfo(stream, face);
+    writeNightfireOpenExtraMaterialInfo(stream, face);
+    fmt::format_to(std::ostreambuf_iterator<char>(stream), "\n");
+  }
+};
+
 std::unique_ptr<NodeSerializer> MapFileSerializer::create(
   const mdl::MapFormat format, std::ostream& stream)
 {
@@ -295,6 +331,8 @@ std::unique_ptr<NodeSerializer> MapFileSerializer::create(
     return std::make_unique<DaikatanaFileSerializer>(stream);
   case mdl::MapFormat::Valve:
     return std::make_unique<ValveFileSerializer>(stream);
+  case mdl::MapFormat::NightfireOpen:
+    return std::make_unique<NightfireOpenFileSerializer>(stream);
   case mdl::MapFormat::Hexen2:
     return std::make_unique<Hexen2FileSerializer>(stream);
   case mdl::MapFormat::Unknown:
