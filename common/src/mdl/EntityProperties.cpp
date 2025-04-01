@@ -69,6 +69,7 @@ const std::string WorldspawnClassname = "worldspawn";
 const std::string NoClassname = "undefined";
 const std::string LayerClassname = "func_group";
 const std::string GroupClassname = "func_group";
+const std::string FuncDetailClassname = "func_detail";
 const std::string GroupTypeLayer = "_tb_layer";
 const std::string GroupTypeGroup = "_tb_group";
 const std::string DefaultValue;
