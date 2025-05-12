@@ -240,10 +240,11 @@ TrenchBroomApp::TrenchBroomApp(int& argc, char** argv)
   }
 #endif
 
-  if (pref(Preferences::AutoCheckForUpdates))
-  {
-    m_updater->checkForUpdates();
-  }
+  // NFOPEN: We don't support automatic updates of the fork build right now.
+  // if (pref(Preferences::AutoCheckForUpdates))
+  // {
+  //   m_updater->checkForUpdates();
+  // }
 }
 
 TrenchBroomApp::~TrenchBroomApp()

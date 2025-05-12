@@ -106,7 +106,10 @@ void PreferenceDialog::createGui()
   m_toolBar->addAction(mouseImage, "Mouse", [&]() { switchToPane(PrefPane::Mouse); });
   m_toolBar->addAction(
     keyboardImage, "Keyboard", [&]() { switchToPane(PrefPane::Keyboard); });
-  m_toolBar->addAction(updateImage, "Update", [&]() { switchToPane(PrefPane::Update); });
+
+  // NFOPEN: We don't support automatic updates of the fork build right now.
+  // m_toolBar->addAction(updateImage, "Update", [&]() { switchToPane(PrefPane::Update);
+  // });
 
   // Don't display tooltips for pane switcher buttons...
   for (auto* button : m_toolBar->findChildren<QToolButton*>())
@@ -120,7 +123,9 @@ void PreferenceDialog::createGui()
   m_stackedWidget->addWidget(new ColorsPreferencePane{});
   m_stackedWidget->addWidget(new MousePreferencePane{});
   m_stackedWidget->addWidget(new KeyboardPreferencePane{m_document.get()});
-  m_stackedWidget->addWidget(new UpdatePreferencePane{});
+
+  // NFOPEN: We don't support automatic updates of the fork build right now.
+  // m_stackedWidget->addWidget(new UpdatePreferencePane{});
 
   m_buttonBox = new QDialogButtonBox{
     QDialogButtonBox::RestoreDefaults
