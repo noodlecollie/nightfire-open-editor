@@ -2055,7 +2055,7 @@ void ActionManager::createRunMenu()
     "Menu/Run/Compile...",
     QObject::tr("Compile Map..."),
     ActionContext::Any,
-    QKeySequence{},
+    QKeySequence{Qt::Key_F9},
     [](auto& context) { context.frame()->showCompileDialog(); },
     [](const auto& context) { return context.hasDocument(); },
   }));
