@@ -463,6 +463,13 @@ void MaterialBrowserView::doContextMenu(
       doc->selectBrushesWithMaterial(material);
     });
 
+    menu.addAction(
+      tr("Set As Default Material"), this, [&, material = &cellData(*cell)]() {
+        auto doc = kdl::mem_lock(m_document);
+        doc->setDefaultMaterialName(
+          material ? material->name() : mdl::BrushFaceAttributes::NoMaterialName);
+      });
+
     menu.exec(event->globalPos());
   }
 }

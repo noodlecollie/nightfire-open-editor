@@ -148,6 +148,7 @@ protected:
 
   mdl::LayerNode* m_currentLayer = nullptr;
   std::string m_currentMaterialName = mdl::BrushFaceAttributes::NoMaterialName;
+  std::string m_defaultMaterialName = mdl::BrushFaceAttributes::NoMaterialName;
   vm::bbox3d m_lastSelectionBounds = vm::bbox3d{0.0, 32.0};
   mutable vm::bbox3d m_selectionBounds;
   mutable bool m_selectionBoundsValid = true;
@@ -183,6 +184,7 @@ public: // notification
   Notifier<> editorContextDidChangeNotifier;
   Notifier<const mdl::LayerNode*> currentLayerDidChangeNotifier;
   Notifier<const std::string&> currentMaterialNameDidChangeNotifier;
+  Notifier<const std::string&> defaultMaterialNameDidChangeNotifier;
 
   Notifier<> selectionWillChangeNotifier;
   Notifier<const Selection&> selectionDidChangeNotifier;
@@ -205,6 +207,7 @@ public: // notification
 
   Notifier<> materialCollectionsWillChangeNotifier;
   Notifier<> materialCollectionsDidChangeNotifier;
+  Notifier<> usedMaterialCollectionsDidChangeNotifier;
 
   Notifier<> materialUsageCountsDidChangeNotifier;
 
@@ -403,7 +406,9 @@ public: // selection
   const vm::bbox3d& lastSelectionBounds() const override;
   const vm::bbox3d& selectionBounds() const override;
   const std::string& currentMaterialName() const override;
+  const std::string& defaultMaterialName() const override;
   void setCurrentMaterialName(const std::string& currentMaterialName);
+  void setDefaultMaterialName(const std::string& defaultMaterialName);
 
   void selectAllNodes() override;
   void selectSiblings() override;
@@ -737,6 +742,8 @@ private:
   void loadEntityModels();
   void unloadEntityModels();
 
+  void resetDefaultMaterialIfRequired();
+
 protected:
   void reloadMaterials();
   void loadMaterials();
@@ -823,6 +830,7 @@ private: // observers
   void connectObservers();
   void materialCollectionsWillChange();
   void materialCollectionsDidChange();
+  void usedMaterialCollectionsDidChange();
   void entityDefinitionsWillChange();
   void entityDefinitionsDidChange();
   void modsWillChange();

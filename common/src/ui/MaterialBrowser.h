@@ -55,6 +55,7 @@ private:
   QComboBox* m_sortOrderChoice = nullptr;
   QPushButton* m_groupButton = nullptr;
   QPushButton* m_usedButton = nullptr;
+  QPushButton* m_selectDefaultMaterialButton = nullptr;
   QLineEdit* m_filterBox = nullptr;
   QScrollBar* m_scrollBar = nullptr;
   MaterialBrowserView* m_view = nullptr;
@@ -92,10 +93,13 @@ private:
   void brushFacesDidChange(const std::vector<mdl::BrushFaceHandle>& faces);
   void materialCollectionsDidChange();
   void currentMaterialNameDidChange(const std::string& materialName);
+  void defaultMaterialNameDidChange(const std::string& materialName);
   void preferenceDidChange(const std::filesystem::path& path);
 
   void reload();
   void updateSelectedMaterial();
+  void updateDefaultMaterial();
+  void selectDefaultMaterial();
 };
 
 } // namespace tb::ui

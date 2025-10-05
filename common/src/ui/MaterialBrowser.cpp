@@ -20,9 +20,11 @@
 #include "MaterialBrowser.h"
 
 #include <QComboBox>
+#include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QScrollBar>
+#include <QSpacerItem>
 #include <QVBoxLayout>
 #include <QtGlobal>
 
@@ -164,11 +166,31 @@ void MaterialBrowser::createGui(GLContextManager& contextManager)
   controlLayout->addWidget(m_usedButton);
   controlLayout->addWidget(m_filterBox, 1);
 
+  auto* defaultMaterialLabel = new QLabel{tr("Default material:")};
+  m_selectDefaultMaterialButton = new QPushButton{tr("None")};
+  m_selectDefaultMaterialButton->setToolTip(tr("Select the default material"));
+  m_selectDefaultMaterialButton->setFlat(true);
+  connect(m_selectDefaultMaterialButton, &QAbstractButton::clicked, this, [&]() {
+    selectDefaultMaterial();
+  });
+
+  auto* defaultMaterialLayout = new QHBoxLayout{};
+  defaultMaterialLayout->setContentsMargins(
+    LayoutConstants::NarrowHMargin,
+    LayoutConstants::NarrowVMargin,
+    LayoutConstants::NarrowHMargin,
+    LayoutConstants::NarrowVMargin);
+  defaultMaterialLayout->setSpacing(LayoutConstants::NarrowHMargin);
+  defaultMaterialLayout->addWidget(defaultMaterialLabel);
+  defaultMaterialLayout->addWidget(m_selectDefaultMaterialButton);
+  defaultMaterialLayout->addStretch();
+
   auto* outerLayout = new QVBoxLayout{};
   outerLayout->setContentsMargins(0, 0, 0, 0);
   outerLayout->setSpacing(0);
   outerLayout->addWidget(browserPanel, 1);
   outerLayout->addLayout(controlLayout, 0);
+  outerLayout->addLayout(defaultMaterialLayout, 0);
 
   setLayout(outerLayout);
 }
@@ -201,6 +223,10 @@ void MaterialBrowser::connectObservers()
     this, &MaterialBrowser::materialCollectionsDidChange);
   m_notifierConnection += document->currentMaterialNameDidChangeNotifier.connect(
     this, &MaterialBrowser::currentMaterialNameDidChange);
+  m_notifierConnection += document->defaultMaterialNameDidChangeNotifier.connect(
+    this, &MaterialBrowser::defaultMaterialNameDidChange);
+  m_notifierConnection += document->usedMaterialCollectionsDidChangeNotifier.connect(
+    this, &MaterialBrowser::updateDefaultMaterial);
 
   auto& prefs = PreferenceManager::instance();
   m_notifierConnection += prefs.preferenceDidChangeNotifier.connect(
@@ -247,6 +273,11 @@ void MaterialBrowser::currentMaterialNameDidChange(const std::string& /* materia
   updateSelectedMaterial();
 }
 
+void MaterialBrowser::defaultMaterialNameDidChange(const std::string& /* materialName */)
+{
+  updateDefaultMaterial();
+}
+
 void MaterialBrowser::preferenceDidChange(const std::filesystem::path& path)
 {
   auto document = kdl::mem_lock(m_document);
@@ -267,6 +298,7 @@ void MaterialBrowser::reload()
   if (m_view)
   {
     updateSelectedMaterial();
+    updateDefaultMaterial();
     m_view->invalidate();
     m_view->update();
   }
@@ -278,6 +310,30 @@ void MaterialBrowser::updateSelectedMaterial()
   const auto& materialName = document->currentMaterialName();
   const auto* material = document->materialManager().material(materialName);
   m_view->setSelectedMaterial(material);
+}
+
+void MaterialBrowser::updateDefaultMaterial()
+{
+  auto document = kdl::mem_lock(m_document);
+  const auto& materialName = document->defaultMaterialName();
+
+  if (materialName != mdl::BrushFaceAttributes::NoMaterialName)
+  {
+    m_selectDefaultMaterialButton->setText(QString::fromStdString(materialName));
+  }
+  else
+  {
+    m_selectDefaultMaterialButton->setText(tr("None"));
+  }
+}
+
+void MaterialBrowser::selectDefaultMaterial()
+{
+  auto document = kdl::mem_lock(m_document);
+  const auto& materialName = document->defaultMaterialName();
+  document->setCurrentMaterialName(materialName);
+  const auto* material = document->materialManager().material(materialName);
+  m_view->revealMaterial(material);
 }
 
 } // namespace tb::ui

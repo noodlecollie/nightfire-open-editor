@@ -1398,12 +1398,26 @@ const std::string& MapDocument::currentMaterialName() const
   return m_currentMaterialName;
 }
 
+const std::string& MapDocument::defaultMaterialName() const
+{
+  return m_defaultMaterialName;
+}
+
 void MapDocument::setCurrentMaterialName(const std::string& currentMaterialName)
 {
   if (m_currentMaterialName != currentMaterialName)
   {
     m_currentMaterialName = currentMaterialName;
     currentMaterialNameDidChangeNotifier(m_currentMaterialName);
+  }
+}
+
+void MapDocument::setDefaultMaterialName(const std::string& defaultMaterialName)
+{
+  if (m_defaultMaterialName != defaultMaterialName)
+  {
+    m_defaultMaterialName = defaultMaterialName;
+    defaultMaterialNameDidChangeNotifier(m_defaultMaterialName);
   }
 }
 
@@ -4727,6 +4741,11 @@ void MapDocument::setEnabledMaterialCollections(
   const auto success = setProperty(
     mdl::EntityPropertyKeys::EnabledMaterialCollections, enabledMaterialCollectionStr);
   transaction.finish(success);
+
+  if ( success )
+  {
+    usedMaterialCollectionsDidChangeNotifier();
+  }
 }
 
 void MapDocument::loadAssets()
@@ -4785,6 +4804,33 @@ void MapDocument::loadEntityModels()
 void MapDocument::unloadEntityModels()
 {
   clearEntityModels();
+}
+
+void MapDocument::resetDefaultMaterialIfRequired()
+{
+  const std::vector<std::filesystem::path> enabledCollectionPaths =
+    enabledMaterialCollections();
+  mdl::MaterialManager& matMgr = materialManager();
+  const auto& materialName = defaultMaterialName();
+  bool needsReset = true;
+
+  for (const mdl::MaterialCollection& collection : matMgr.collections())
+  {
+    if (
+      std::find(
+        enabledCollectionPaths.begin(), enabledCollectionPaths.end(), collection.path())
+        != enabledCollectionPaths.end()
+      && collection.materialByName(materialName))
+    {
+      needsReset = false;
+      break;
+    }
+  }
+
+  if (needsReset)
+  {
+    setDefaultMaterialName(mdl::BrushFaceAttributes::NoMaterialName);
+  }
 }
 
 void MapDocument::reloadMaterials()
@@ -5350,6 +5396,8 @@ void MapDocument::connectObservers()
     this, &MapDocument::materialCollectionsWillChange);
   m_notifierConnection += materialCollectionsDidChangeNotifier.connect(
     this, &MapDocument::materialCollectionsDidChange);
+  m_notifierConnection += usedMaterialCollectionsDidChangeNotifier.connect(
+    this, &MapDocument::usedMaterialCollectionsDidChange);
 
   m_notifierConnection += entityDefinitionsWillChangeNotifier.connect(
     this, &MapDocument::entityDefinitionsWillChange);
@@ -5403,6 +5451,12 @@ void MapDocument::materialCollectionsDidChange()
   loadMaterials();
   setMaterials();
   updateAllFaceTags();
+  resetDefaultMaterialIfRequired();
+}
+
+void MapDocument::usedMaterialCollectionsDidChange()
+{
+  resetDefaultMaterialIfRequired();
 }
 
 void MapDocument::entityDefinitionsWillChange()
